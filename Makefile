@@ -6,7 +6,7 @@ main:	$(OBJECTS)
 	$(CC)	$(LDFLAGS)	-g	$(CUSTOM_INC)	$(OBJECTS)	main.c	$(LD_FLAGS)	-o	main
 
 server.o:
-	$(CC)	$(CFLAGS)	-g	-c	server.c	$(CUSTOM_INC)
+	$(CC)	$(CFLAGS)	-g	-c	src/server.c	$(CUSTOM_INC)
 
 clean:
 	rm	*.o	main
