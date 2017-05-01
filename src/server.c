@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
 
 #define MAX_CONNECTION 1024
 #define PORT 5000
@@ -58,11 +59,11 @@ int32_t accept_connection()
     return sock;
 }
 
-void receive_data()
-{
-
-}
-
+/**
+ * @brief Socket baglantısı oluştuktan sonra p_shm_socket_fd değişken dizisine "file descripter" değeri alınır.
+ * Bu değer Parent process de kullanılmak üzere atanmış olur.
+ *
+*/
 int32_t chiled_process(int32_t *p_shm_socket_fd)
 {
     DEBUG_INFO("Process Olusturuldu - Chiled Process");
@@ -114,14 +115,45 @@ int32_t chiled_process(int32_t *p_shm_socket_fd)
             p_shm_socket_fd[MAX_CONNECTION]++;
             DEBUG_INFO("Connection_size : %d",p_shm_socket_fd[MAX_CONNECTION]);
         }
-        /*
-            MAX Socket baglantısı kontrol edilir.
-        */
-        if (p_shm_socket_fd[1024] == MAX_CONNECTION)
-        {
-            DEBUG_INFO("Bağlantı Sayısı Maximum Degerine Ulaştı Connection_size : %d",connection_size);
-            
-        }
+        DEBUG_INFO("Bağlantı Sayısı Maximum Degerine Ulaştı Connection_size : %d",connection_size);
+    }
+}
+
+/**
+ * @brief Gelen datayı işlemek için kullanılır.
+ *
+ * @param Shared olarak paylaşılan socket dizisidir.
+ *
+*/
+void receive_data(int32_t *p_shm_socket_fd)
+{
+    DEBUG_INFO("Parent Process");
+	int32_t temp_sock;
+	int32_t i = 0;
+	fd_set active_fd_set, temp_fd_set;
+
+    FD_ZERO(&active_fd_set);
+
+    /*
+        Max bağlantı değeri kadar for yap ve FD_SET değerini set et.
+    */
+    for ( i = 0 ; i < p_shm_socket_fd[1024] ; i++) 
+    {
+        //socket descriptor
+        temp_sock = p_shm_socket_fd[i];
+         
+        //if valid socket descriptor then add to read list
+        if(temp_sock > 0)
+            FD_SET( temp_sock , &temp_fd_set);
+    }
+
+    active_fd_set = temp_fd_set;
+
+    select( p_shm_socket_fd[1024] + 1 , &active_fd_set , NULL , NULL , NULL);
+
+    for (i = 0; i < p_shm_socket_fd[1024]; ++i)
+    {
+       
     }
 }
 
@@ -140,7 +172,6 @@ int32_t server_init()
     */
     int32_t result;
     pid_t   accept_child_pid;
-    fd_set active_fd_set, temp_fd_set;
     int32_t    ShmID;
 
     /*
@@ -187,6 +218,6 @@ int32_t server_init()
             Bu process sadece client'dan gelen verileri alacaktır.
         */
         DEBUG_INFO("Process Olusturuldu - Parent Process");
-        receive_data((void*)socket_fd);
+        receive_data(p_shm_socket_fd);
     }
 }
