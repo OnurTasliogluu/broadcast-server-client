@@ -73,10 +73,11 @@ int32_t accept_connection(int32_t main_socket)
     server_name.sin_port = htons (PORT);
     server_name.sin_addr.s_addr = htonl (INADDR_ANY);
 
-    sock = accept(main_socket, (struct sockaddr *)&address, (socklen_t*)&addr_len);
+    sock = accept(main_socket, (struct sockaddr *)&server_name, (socklen_t*)&addr_len);
 
     if (sock < 0)
     {
+        DEBUG_ERROR("Accept Yapilamadi.");
         return -1;
     }
     return sock;
@@ -100,6 +101,7 @@ int32_t chiled_process(int32_t *p_shm_socket_fd)
         return -1;
     }
 
+    DEBUG_ERROR("Ana socket oluşturuldu.");
     for(;;)
     {
         /*
@@ -154,6 +156,9 @@ void receive_data(int32_t *p_shm_socket_fd)
     DEBUG_INFO("Parent Process");
 	int32_t temp_sock;
 	int32_t i = 0;
+    int32_t read_length;
+    int32_t sock_fd;
+    char buffer[1024];
 	fd_set active_fd_set, temp_fd_set;
 
     FD_ZERO(&active_fd_set);
@@ -163,10 +168,8 @@ void receive_data(int32_t *p_shm_socket_fd)
     */
     for ( i = 0 ; i < p_shm_socket_fd[1024] ; i++) 
     {
-        //socket descriptor
         temp_sock = p_shm_socket_fd[i];
          
-        //if valid socket descriptor then add to read list
         if(temp_sock > 0)
             FD_SET( temp_sock , &temp_fd_set);
     }
@@ -175,9 +178,33 @@ void receive_data(int32_t *p_shm_socket_fd)
 
     select( p_shm_socket_fd[1024] + 1 , &active_fd_set , NULL , NULL , NULL);
 
+    /*
+        Her bir fd kontrol edilir FD_ISSET ile, eğer veri varsa diğer socketlere gönderilmesi gerekmektedir.
+        Eğer veri okunamazsa socket düşmüş demektir.
+    */
     for (i = 0; i < p_shm_socket_fd[1024]; ++i)
     {
        
+        if (FD_ISSET(p_shm_socket_fd[i], &readfds)) 
+        {
+          
+            sock_fd = p_shm_socket_fd[i];
+            memset(buffer,'\0',sizeof(buffer));
+            if ((read_length = read( sock_fd , buffer, 1024)) == 0)
+            {
+                /*
+                    Bağlantı sonlandırılır.
+                    Bağlantı sayısı değeri 1 azaltılır.
+                */
+                close(sock_fd);
+                p_shm_socket_fd[1024]--;
+            }
+            else
+            {
+                buffer[read_length] = '\0';
+                send(sock_fd , buffer , strlen(buffer) , 0 );
+            }
+        }
     }
 }
 
