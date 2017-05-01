@@ -27,10 +27,10 @@
  *
  * @return Socket numarasıdır.
 */
-int32_t accept_connection()
+int32_t bind_connection()
 {
     int32_t sock;
-    struct sockaddr_in s_name;
+    struct sockaddr_in server_name;
 
     /*
         Socket oluşturuluyor.
@@ -42,16 +42,16 @@ int32_t accept_connection()
         return -1;
     }
 
-    s_name.sin_family = AF_INET;
-    s_name.sin_port = htons (PORT);
-    s_name.sin_addr.s_addr = htonl (INADDR_ANY);
-    if (bind (sock, (struct sockaddr *) &s_name, sizeof (s_name)) < 0)
+    server_name.sin_family = AF_INET;
+    server_name.sin_port = htons (PORT);
+    server_name.sin_addr.s_addr = htonl (INADDR_ANY);
+    if (bind (sock, (struct sockaddr *) &server_name, sizeof (server_name)) < 0)
 	{
         DEBUG_ERROR("Bind Yapilamadi.");
         return -1;
     }
 
-    if (listen(s_name, 3) < 0)
+    if (listen(server_name, 3) < 0)
 	{
         DEBUG_ERROR("Listen Yapilamadi");
         return -1;
@@ -60,6 +60,28 @@ int32_t accept_connection()
 }
 
 /**
+ * @brief Client'dan gelen istekleri kabul eder.
+ *
+ * @return Socket numarasıdır.
+*/
+int32_t accept_connection(int32_t main_socket)
+{
+    int32_t sock, addr_len;
+    struct sockaddr_in server_name;
+
+    server_name.sin_family = AF_INET;
+    server_name.sin_port = htons (PORT);
+    server_name.sin_addr.s_addr = htonl (INADDR_ANY);
+
+    sock = accept(main_socket, (struct sockaddr *)&address, (socklen_t*)&addr_len);
+
+    if (sock < 0)
+    {
+        return -1;
+    }
+    return sock;
+}
+/**
  * @brief Socket baglantısı oluştuktan sonra p_shm_socket_fd değişken dizisine "file descripter" değeri alınır.
  * Bu değer Parent process de kullanılmak üzere atanmış olur.
  *
@@ -67,8 +89,17 @@ int32_t accept_connection()
 int32_t chiled_process(int32_t *p_shm_socket_fd)
 {
     DEBUG_INFO("Process Olusturuldu - Chiled Process");
+    int32_t main_socket, new_socket;
+    main_socket = bind_connection();
+    /*
+        Bağlantı başarıylı mı değil mi?
+    */
+    if (main_socket < 0)
+    {
+        DEBUG_ERROR("Socket olusturulamadi.");
+        return -1;
+    }
 
-    int32_t result;
     for(;;)
     {
         /*
@@ -94,15 +125,8 @@ int32_t chiled_process(int32_t *p_shm_socket_fd)
                 }
             }
         }
-        result = accept_connection();
-        /*
-            Bağlantı başarıylı mı değil mi?
-        */
-        if (result < 0)
-        {
-        	DEBUG_ERROR("Socket olusturulamadi.");
-        	return -1;
-        }
+        
+        new_socket = accept_connection(main_socket);
         /*
             Bağlantı başarılıysa:
             sock değeri array'e taşınır.
@@ -110,8 +134,8 @@ int32_t chiled_process(int32_t *p_shm_socket_fd)
         */
         else
         {
-            DEBUG_INFO("Socket başarıyla oluturuldu sock_no : %d",result);
-            p_shm_socket_fd[p_shm_socket_fd[MAX_CONNECTION]] = result;
+            DEBUG_INFO("Socket başarıyla oluturuldu sock_no : %d",new_socket);
+            p_shm_socket_fd[p_shm_socket_fd[MAX_CONNECTION]] = new_socket;
             p_shm_socket_fd[MAX_CONNECTION]++;
             DEBUG_INFO("Connection_size : %d",p_shm_socket_fd[MAX_CONNECTION]);
         }
