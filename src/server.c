@@ -17,10 +17,6 @@
 /**
  * @brief Client'dan gelen istekleri kabul eder.
  *
- * @param Socket bağlantısı için gerekli olan "file descripter" degiskenidir.
- *
- * @return 
- *
 */
 void accept_connection()
 {
@@ -29,8 +25,14 @@ void accept_connection()
 }
 void receive_data()
 {
-	
+
 }
+
+/**
+ * @brief Programın ana başlangıç noktasıdır.
+ *        Çocuk process ve Parent process'i ayrıştırır.
+ *
+*/
 void server_init()
 {
 	int32_t	socket_fd[MAX_CONNECTION];
