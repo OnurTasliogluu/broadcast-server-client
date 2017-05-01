@@ -3,25 +3,26 @@
 int main()
 {
 	int     accept_connection[1000];
-    pid_t   childpid;
+    pid_t   accept_child_pid;
 
-    pipe(fd);
+    pipe(accept_connection);
 
-    if((childpid = fork()) == -1)
+    /*
+    	Cocuk process olusturulur.
+    */
+    if((accept_child_pid = fork()) == -1)
     {
-            perror("fork");
-            exit(1);
+            DEBUG_PRINT("DEBUG_ERROR : Process olusturulamadi.");
+            return -1;
     }
 
-    if(childpid == 0)
+    if(accept_child_pid == 0)
     {
-            /* Child process closes up input side of pipe */
-            close(fd[0]);
+            // 
     }
     else
     {
-            /* Parent process closes up output side of pipe */
-            close(fd[1]);
+            
     }
 	return 0;
 }

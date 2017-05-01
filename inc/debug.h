@@ -13,12 +13,13 @@
  * @brief Program çalışırken bilgi almak için kullanılır.
  *
 */
-#ifdef DEBUG
-#define DEBUG_PRINT(format, args...)  \
+
+#define DEBUG_INFO(format, args...)  \
 		fprintf(stdout, "%12s: %3d: %s ", __FILE__, __LINE__, green), \
 		fprintf(stdout, format, ##args)
-#else
-#define DEBUG_PRINT(format, args...)
-#endif
+
+#define DEBUG_ERROR(format, args...)  \
+		fprintf(stdout, "%12s: %3d: %s ", __FILE__, __LINE__, red), \
+		fprintf(stdout, format, ##args)
 
 #endif
