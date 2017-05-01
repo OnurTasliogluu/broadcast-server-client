@@ -2,6 +2,9 @@
 
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 #define MAX_CONNECTION 1024
 #define PORT 5000
@@ -60,6 +63,68 @@ void receive_data()
 
 }
 
+int32_t chiled_process(int32_t *p_shm_socket_fd)
+{
+    DEBUG_INFO("Process Olusturuldu - Chiled Process");
+
+    int32_t result;
+    for(;;)
+    {
+        /*
+            Socket yapılmasının yapılacağı fonksiyona git.
+            Dönen değer 1025. 
+        */
+        if (p_shm_socket_fd[MAX_CONNECTION] == MAX_CONNECTION)
+        {
+        	for(;;)
+            {
+                /*
+                    Socket bağlantısı düşene kadar 5 sn bekle.
+                */
+                sleep(5);
+                DEBUG_INFO("Connection_size : %d",p_shm_socket_fd[MAX_CONNECTION]);
+
+                /*
+                    Bağlantı sayısı düşmüşse yeniden bağlantı kabulü için beklemeye geç.
+                */
+                if(p_shm_socket_fd[MAX_CONNECTION] != MAX_CONNECTION)
+                {
+                    break;
+                }
+            }
+        }
+        result = accept_connection();
+        /*
+            Bağlantı başarıylı mı değil mi?
+        */
+        if (result < 0)
+        {
+        	DEBUG_ERROR("Socket olusturulamadi.");
+        	return -1;
+        }
+        /*
+            Bağlantı başarılıysa:
+            sock değeri array'e taşınır.
+            connection_size 1 arttırılır.
+        */
+        else
+        {
+            DEBUG_INFO("Socket başarıyla oluturuldu sock_no : %d",result);
+            p_shm_socket_fd[p_shm_socket_fd[MAX_CONNECTION]] = result;
+            p_shm_socket_fd[MAX_CONNECTION]++;
+            DEBUG_INFO("Connection_size : %d",p_shm_socket_fd[MAX_CONNECTION]);
+        }
+        /*
+            MAX Socket baglantısı kontrol edilir.
+        */
+        if (p_shm_socket_fd[1024] == MAX_CONNECTION)
+        {
+            DEBUG_INFO("Bağlantı Sayısı Maximum Degerine Ulaştı Connection_size : %d",connection_size);
+            
+        }
+    }
+}
+
 /**
  * @brief Programın ana başlangıç noktasıdır.
  *        Çocuk process ve Parent process'i ayrıştırır.
@@ -69,22 +134,34 @@ void receive_data()
 */
 int32_t server_init()
 {
-    int32_t	socket_fd[MAX_CONNECTION];
-    int32_t connection_size = 0;
+    int32_t	*p_shm_socket_fd;
+    /*
+        p_shm_socket_fd[1024] <-> 1024. byte connection size ı belirler.
+    */
+    int32_t result;
     pid_t   accept_child_pid;
     fd_set active_fd_set, temp_fd_set;
+    int32_t    ShmID;
+
     /*
-        Paylaşım yapılacak şekilde pipe ile ilgili değerlerin ortak kullanılacağı belirtilir.
+        1024 Byte degerinde "shared memory" elde edilir.
     */
-    pipe(socket_fd);
-    if (pipe (mypipe))
+    ShmID = shmget(IPC_PRIVATE, 1025*sizeof(int32_t), IPC_CREAT | 0666);
+    if (ShmID < 0)
     {
-        DEBUG_ERROR(stderr, "Pipe failed.\n");
-        return EXIT_FAILURE;
+        DEBUG_ERROR("SMGGET hatalı dönüş yaptı.");
+        exit(1);
     }
 
-    pipe(connection_size);
+    p_shm_socket_fd = (int32_t *) shmat(ShmID, NULL, 0);
+    if ((int32_t) p_shm_socket_fd == -1)
+    {
+        DEBUG_ERROR("SHMAT hatalı dönüş yaptı.");
+        exit(1);
+    }
+    DEBUG_INFO("1025 byte kadar shared memory olusturuldu.");
 
+    memset(p_shm_socket_fd,'\0',1025*sizeof(int32_t));
     /*
         Cocuk process olusturulur.
     */
@@ -100,52 +177,8 @@ int32_t server_init()
             Cocuk Process
             Bu process sadece client'dan gelen baglantı isteklerini kabul edecektir.
         */
-        DEBUG_INFO("Process Olusturuldu - Chiled Process");
-        for(;;)
-        {
-            /*
-                Socket yapılmasının yapılacağı fonksiyona git.
-            */
-            sock = accept_connection();
-            /*
-                Bağlantı başarıylı mı değil mi?
-            */
-            if (sock < 0)
-            {
-                DEBUG_ERROR("Socket Olusturulamadi");
-            }
-            /*
-                Bağlantı başarılıysa:
-                sock değeri array'e taşınır.
-                connection_size 1 arttırılır.
-            */
-            else
-            {
-                DEBUG_INFO("Socket başarıyla oluturuldu sock_no : %d",sock);
-                socket_fd[connection_size] = sock;
-                connection_size++;
-                DEBUG_INFO("Connection_size : %d",connection_size);
-            }
-            if (connection_size == 1024)
-            {
-                DEBUG_INFO("Bağlantı Sayısı Maximum Degerine Ulaştı Connection_size : %d",connection_size);
-                for(;;)
-                {
-                    /*
-                        Socket bağlantısı düşene kadar 5 sn bekle.
-                    */
-                    sleep(5);
-                    DEBUG_INFO("Connection_size : %d",connection_size);
-                    /*
-                        Bağlantı sayısı düşmüşse yeniden bağlantı kabulü için beklemeye geç.
-                    */
-                    if(connection_size != 1024)
-                    {
-                        break;
-                    }
-                }
-            }
-        }
+        chiled_process(p_shm_socket_fd);
+        
     }
     else
     {
