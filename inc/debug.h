@@ -10,7 +10,7 @@
 #define none    "\033[0m"
 
 /**
- * @brief 
+ * @brief Program çalışırken bilgi almak için kullanılır.
  *
 */
 #ifdef DEBUG
