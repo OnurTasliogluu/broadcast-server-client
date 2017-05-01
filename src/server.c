@@ -2,12 +2,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #define MAX_CONNECTION 1024
 #define PORT 5000
@@ -129,8 +132,6 @@ int32_t chiled_process(int32_t *p_shm_socket_fd)
                 }
             }
         }
-        
-        new_socket = accept_connection(main_socket);
         /*
             Bağlantı başarılıysa:
             sock değeri array'e taşınır.
@@ -138,6 +139,7 @@ int32_t chiled_process(int32_t *p_shm_socket_fd)
         */
         else
         {
+            new_socket = accept_connection(main_socket);
             DEBUG_INFO("Socket başarıyla oluturuldu sock_no : %d",new_socket);
             p_shm_socket_fd[p_shm_socket_fd[MAX_CONNECTION]] = new_socket;
             p_shm_socket_fd[MAX_CONNECTION]++;

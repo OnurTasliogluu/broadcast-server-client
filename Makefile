@@ -1,5 +1,5 @@
 LD_FLAGS:=-ldl
-CUSTOM_INC:=-I../inc
+CUSTOM_INC:=-I./inc
 OBJECTS:=server.o
 
 main:	$(OBJECTS)
