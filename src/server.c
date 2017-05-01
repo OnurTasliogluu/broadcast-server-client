@@ -168,46 +168,49 @@ void receive_data(int32_t *p_shm_socket_fd)
 
     FD_ZERO(&active_fd_set);
 
-    /*
-        Max bağlantı değeri kadar for yap ve FD_SET değerini set et.
-    */
-    for ( i = 0 ; i < p_shm_socket_fd[1024] ; i++) 
+    for (;;)
     {
-        temp_sock = p_shm_socket_fd[i];
-         
-        if(temp_sock > 0)
-            FD_SET( temp_sock , &temp_fd_set);
-    }
-
-    active_fd_set = temp_fd_set;
-
-    select( p_shm_socket_fd[1024] + 1 , &active_fd_set , NULL , NULL , NULL);
-
-    /*
-        Her bir fd kontrol edilir FD_ISSET ile, eğer veri varsa diğer socketlere gönderilmesi gerekmektedir.
-        Eğer veri okunamazsa socket düşmüş demektir.
-    */
-    for (i = 0; i < p_shm_socket_fd[1024]; ++i)
-    {
-       
-        if (FD_ISSET(p_shm_socket_fd[i], &active_fd_set)) 
+        /*
+            Max bağlantı değeri kadar for yap ve FD_SET değerini set et.
+        */
+        for ( i = 0 ; i < p_shm_socket_fd[1024] ; i++) 
         {
-          
-            sock_fd = p_shm_socket_fd[i];
-            memset(buffer,'\0',sizeof(buffer));
-            if ((read_length = read( sock_fd , buffer, 1024)) == 0)
+            temp_sock = p_shm_socket_fd[i];
+             
+            if(temp_sock > 0)
+                FD_SET( temp_sock , &temp_fd_set);
+        }
+
+        active_fd_set = temp_fd_set;
+
+        select( p_shm_socket_fd[1024] + 1 , &active_fd_set , NULL , NULL , NULL);
+
+        /*
+            Her bir fd kontrol edilir FD_ISSET ile, eğer veri varsa diğer socketlere gönderilmesi gerekmektedir.
+            Eğer veri okunamazsa socket düşmüş demektir.
+        */
+        for (i = 0; i < p_shm_socket_fd[1024]; ++i)
+        {
+           
+            if (FD_ISSET(p_shm_socket_fd[i], &active_fd_set)) 
             {
-                /*
-                    Bağlantı sonlandırılır.
-                    Bağlantı sayısı değeri 1 azaltılır.
-                */
-                close(sock_fd);
-                p_shm_socket_fd[1024]--;
-            }
-            else
-            {
-                buffer[read_length] = '\0';
-                send(sock_fd , buffer , strlen(buffer) , 0 );
+              
+                sock_fd = p_shm_socket_fd[i];
+                memset(buffer,'\0',sizeof(buffer));
+                if ((read_length = read( sock_fd , buffer, 1024)) == 0)
+                {
+                    /*
+                        Bağlantı sonlandırılır.
+                        Bağlantı sayısı değeri 1 azaltılır.
+                    */
+                    close(sock_fd);
+                    p_shm_socket_fd[1024]--;
+                }
+                else
+                {
+                    buffer[read_length] = '\0';
+                    send(sock_fd , buffer , strlen(buffer) , 0 );
+                }
             }
         }
     }
