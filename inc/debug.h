@@ -15,11 +15,11 @@
 */
 
 #define DEBUG_INFO(format, args...)  \
-		fprintf(stdout, "%12s: %3d: %s ", __FILE__, __LINE__, green), \
-		fprintf(stdout, format, ##args)
+        fprintf(stdout, "%12s: %3d: %s ", __FILE__, __LINE__, green), \
+        fprintf(stdout, format, ##args)
 
 #define DEBUG_ERROR(format, args...)  \
-		fprintf(stdout, "%12s: %3d: %s ", __FILE__, __LINE__, red), \
-		fprintf(stdout, format, ##args)
+        fprintf(stdout, "%12s: %3d: %s ", __FILE__, __LINE__, red), \
+        fprintf(stdout, format, ##args)
 
 #endif
