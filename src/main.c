@@ -1,7 +1,11 @@
 #include "server.h"
+#include "debug.h"
 
 int32_t main()
 {
-	server_init();
+	if (server_init())
+	{
+		DEBUG_ERROR("Cocuk Process Olusturulamadı.");
+	}
 	return 0;
 }
