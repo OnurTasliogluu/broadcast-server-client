@@ -9,12 +9,16 @@
 #define cyan    "\033[1;36m"
 #define none    "\033[0m"
 
+/**
+ * @brief 
+ *
+*/
 #ifdef DEBUG
-#define DEBUG_PRINT(fmt, args...)  \
-		fprintf(stdout, "%12s: %3d: %s:%s ", __FILE__, __LINE__, PS_NAME, green), \
-		fprintf(stdout, "%s:%d:%s(): " fmt, ##args)
+#define DEBUG_PRINT(format, args...)  \
+		fprintf(stdout, "%12s: %3d: %s ", __FILE__, __LINE__, green), \
+		fprintf(stdout, format, ##args)
 #else
-#define DEBUG_PRINT(fmt, args...)
+#define DEBUG_PRINT(format, args...)
 #endif
 
 #endif
