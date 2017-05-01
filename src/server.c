@@ -56,7 +56,7 @@ int32_t bind_connection()
         return -1;
     }
 
-    if (listen(server_name, 3) < 0)
+    if (listen(sock, 3) < 0)
 	{
         DEBUG_ERROR("Listen Yapilamadi");
         return -1;
@@ -145,7 +145,7 @@ int32_t chiled_process(int32_t *p_shm_socket_fd)
             p_shm_socket_fd[MAX_CONNECTION]++;
             DEBUG_INFO("Connection_size : %d",p_shm_socket_fd[MAX_CONNECTION]);
         }
-        DEBUG_INFO("Bağlantı Sayısı Maximum Degerine Ulaştı Connection_size : %d",connection_size);
+        DEBUG_INFO("Bağlantı Sayısı Maximum Degerine Ulaştı Connection_size : %d",p_shm_socket_fd[MAX_CONNECTION]);
     }
 }
 
@@ -189,7 +189,7 @@ void receive_data(int32_t *p_shm_socket_fd)
     for (i = 0; i < p_shm_socket_fd[1024]; ++i)
     {
        
-        if (FD_ISSET(p_shm_socket_fd[i], &readfds)) 
+        if (FD_ISSET(p_shm_socket_fd[i], &active_fd_set)) 
         {
           
             sock_fd = p_shm_socket_fd[i];
