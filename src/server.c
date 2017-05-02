@@ -231,7 +231,6 @@ void receive_data(int32_t *socket_fd)
 int32_t server_init()
 {
     int32_t socket_fd[MAX_CONNECTION+1];
-    memset(socket_fd,0,sizeof(socket_fd));
     int32_t result;
 
     pthread_t thread_create_socket;
