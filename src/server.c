@@ -230,7 +230,7 @@ int32_t server_init()
 
     pthread_t thread_create_socket;
 
-    int result = pthread_create( &thread_create_socket, NULL, create_socket_thread, (void*)socket_fd);
+    result = pthread_create( &thread_create_socket, NULL, create_socket_thread, (void*)socket_fd);
 
     /*
         Thread
