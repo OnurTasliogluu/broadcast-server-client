@@ -98,7 +98,6 @@ int32_t create_socket_thread(int32_t *socket_fd)
     DEBUG_INFO("Process Olusturuldu - Chiled Process");
     int32_t main_socket, new_socket;
     main_socket = bind_connection();
-    connection_size;
     /*
         Bağlantı başarıylı mı değil mi?
     */
@@ -108,7 +107,7 @@ int32_t create_socket_thread(int32_t *socket_fd)
         return -1;
     }
 
-    DEBUG_ERROR("Ana socket oluşturuldu.");
+    DEBUG_ERROR("Ana socket oluşturuldu = %d",main_socket);
     for(;;)
     {
 
@@ -139,15 +138,21 @@ int32_t create_socket_thread(int32_t *socket_fd)
         else
         {
             new_socket = accept_connection(main_socket);
-            DEBUG_INFO("Socket başarıyla oluturuldu sock_no : %d",new_socket);
-            /*
-                1024. integer değer connection sayısını belirtir.
-            */
-            socket_fd[socket_fd[MAX_CONNECTION]] = new_socket;
-            socket_fd[MAX_CONNECTION]++;
-            DEBUG_INFO("Connection_size : %d",socket_fd[MAX_CONNECTION]);
+            if(new_socket < 0)
+            {
+                DEBUG_ERROR("Socket Olusturulamadi = %d",new_socket);
+            }
+            else
+            {
+                DEBUG_INFO("Socket başarıyla oluturuldu sock_no : %d",new_socket);
+                /*
+                    1024. integer değer connection sayısını belirtir.
+                */
+                socket_fd[socket_fd[MAX_CONNECTION]] = new_socket;
+                socket_fd[MAX_CONNECTION]++;
+                DEBUG_INFO("Connection_size : %d",socket_fd[MAX_CONNECTION]);
+            }
         }
-        
     }
 }
 
@@ -225,7 +230,8 @@ void receive_data(int32_t *socket_fd)
 */
 int32_t server_init()
 {
-    int32_t	socket_fd[MAX_CONNECTION+1];
+    int32_t socket_fd[MAX_CONNECTION+1];
+    memset(socket_fd,0,sizeof(socket_fd));
     int32_t result;
 
     pthread_t thread_create_socket;

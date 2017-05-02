@@ -16,14 +16,13 @@
 */
 
 #define DEBUG_INFO(format, args...)  \
-        setbuf(stdout, NULL), \
-        fprintf(stdout, "%12s: %3d: %s ", __FILE__, __LINE__, green), \
+        fprintf(stdout, "%12s: %3d: %s\n", __FILE__, __LINE__, green), \
         fprintf(stdout, format, ##args)
+        fprintf(stdout, "%s\n", none)
 
 #define DEBUG_ERROR(format, args...)  \
-        setbuf(stdout, NULL), \
-        fprintf(stdout, "%12s: %3d: %s ", __FILE__, __LINE__, red), \
+        fprintf(stdout, "%12s: %3d: %s\n", __FILE__, __LINE__, red), \
         fprintf(stdout, format, ##args)
-
+        fprintf(stdout, "%s\n", none)
 
 #endif

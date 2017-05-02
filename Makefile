@@ -1,4 +1,4 @@
-LD_FLAGS:=-ldl
+LD_FLAGS:=-ldl -lpthread
 CUSTOM_INC:=-I./inc
 OBJECTS:=server.o
 
