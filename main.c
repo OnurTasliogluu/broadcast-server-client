@@ -7,7 +7,7 @@ int32_t main()
 {
     if (server_init())
     {
-        DEBUG_ERROR("Cocuk Process Olusturulamadı.");
+        DEBUG_ERROR("Thread Olusturulamadı.");
     }
     return 0;
 }

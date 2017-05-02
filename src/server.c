@@ -93,11 +93,12 @@ int32_t accept_connection(int32_t main_socket)
  * Bu değer Parent process de kullanılmak üzere atanmış olur.
  *
 */
-int32_t chiled_process(int32_t *p_shm_socket_fd)
+int32_t create_socket_thread(int32_t *socket_fd)
 {
     DEBUG_INFO("Process Olusturuldu - Chiled Process");
     int32_t main_socket, new_socket;
     main_socket = bind_connection();
+    connection_size;
     /*
         Bağlantı başarıylı mı değil mi?
     */
@@ -110,11 +111,8 @@ int32_t chiled_process(int32_t *p_shm_socket_fd)
     DEBUG_ERROR("Ana socket oluşturuldu.");
     for(;;)
     {
-        /*
-            Socket yapılmasının yapılacağı fonksiyona git.
-            Dönen değer 1025. 
-        */
-        if (p_shm_socket_fd[MAX_CONNECTION] == MAX_CONNECTION)
+
+        if (socket_fd[MAX_CONNECTION] == MAX_CONNECTION)
         {
         	for(;;)
             {
@@ -122,12 +120,12 @@ int32_t chiled_process(int32_t *p_shm_socket_fd)
                     Socket bağlantısı düşene kadar 5 sn bekle.
                 */
                 sleep(5);
-                DEBUG_INFO("Connection_size : %d",p_shm_socket_fd[MAX_CONNECTION]);
+                DEBUG_INFO("Bağlantı Sayısı Maximum Degerine Ulaştı Connection_size : %d",socket_fd[MAX_CONNECTION]);
 
                 /*
                     Bağlantı sayısı düşmüşse yeniden bağlantı kabulü için beklemeye geç.
                 */
-                if(p_shm_socket_fd[MAX_CONNECTION] != MAX_CONNECTION)
+                if(socket_fd[MAX_CONNECTION] != MAX_CONNECTION)
                 {
                     break;
                 }
@@ -142,11 +140,14 @@ int32_t chiled_process(int32_t *p_shm_socket_fd)
         {
             new_socket = accept_connection(main_socket);
             DEBUG_INFO("Socket başarıyla oluturuldu sock_no : %d",new_socket);
-            p_shm_socket_fd[p_shm_socket_fd[MAX_CONNECTION]] = new_socket;
-            p_shm_socket_fd[MAX_CONNECTION]++;
-            DEBUG_INFO("Connection_size : %d",p_shm_socket_fd[MAX_CONNECTION]);
+            /*
+                1024. integer değer connection sayısını belirtir.
+            */
+            socket_fd[socket_fd[MAX_CONNECTION]] = new_socket;
+            socket_fd[MAX_CONNECTION]++;
+            DEBUG_INFO("Connection_size : %d",socket_fd[MAX_CONNECTION]);
         }
-        DEBUG_INFO("Bağlantı Sayısı Maximum Degerine Ulaştı Connection_size : %d",p_shm_socket_fd[MAX_CONNECTION]);
+        
     }
 }
 
@@ -156,7 +157,7 @@ int32_t chiled_process(int32_t *p_shm_socket_fd)
  * @param Shared olarak paylaşılan socket dizisidir.
  *
 */
-void receive_data(int32_t *p_shm_socket_fd)
+void receive_data(int32_t *socket_fd)
 {
     DEBUG_INFO("Parent Process");
 	int32_t temp_sock;
@@ -173,9 +174,9 @@ void receive_data(int32_t *p_shm_socket_fd)
         /*
             Max bağlantı değeri kadar for yap ve FD_SET değerini set et.
         */
-        for ( i = 0 ; i < p_shm_socket_fd[1024] ; i++) 
+        for ( i = 0 ; i < socket_fd[MAX_CONNECTION] ; i++) 
         {
-            temp_sock = p_shm_socket_fd[i];
+            temp_sock = socket_fd[i];
              
             if(temp_sock > 0)
                 FD_SET( temp_sock , &temp_fd_set);
@@ -183,19 +184,19 @@ void receive_data(int32_t *p_shm_socket_fd)
 
         active_fd_set = temp_fd_set;
 
-        select( p_shm_socket_fd[1024] + 1 , &active_fd_set , NULL , NULL , NULL);
+        select( socket_fd[MAX_CONNECTION] + 1 , &active_fd_set , NULL , NULL , NULL);
 
         /*
             Her bir fd kontrol edilir FD_ISSET ile, eğer veri varsa diğer socketlere gönderilmesi gerekmektedir.
             Eğer veri okunamazsa socket düşmüş demektir.
         */
-        for (i = 0; i < p_shm_socket_fd[1024]; ++i)
+        for (i = 0; i < socket_fd[MAX_CONNECTION]; ++i)
         {
            
-            if (FD_ISSET(p_shm_socket_fd[i], &active_fd_set)) 
+            if (FD_ISSET(socket_fd[i], &active_fd_set)) 
             {
               
-                sock_fd = p_shm_socket_fd[i];
+                sock_fd = socket_fd[i];
                 memset(buffer,'\0',sizeof(buffer));
                 if ((read_length = read( sock_fd , buffer, 1024)) == 0)
                 {
@@ -204,11 +205,10 @@ void receive_data(int32_t *p_shm_socket_fd)
                         Bağlantı sayısı değeri 1 azaltılır.
                     */
                     close(sock_fd);
-                    p_shm_socket_fd[1024]--;
+                    socket_fd[1024]--;
                 }
                 else
                 {
-                    buffer[read_length] = '\0';
                     send(sock_fd , buffer , strlen(buffer) , 0 );
                 }
             }
@@ -225,58 +225,29 @@ void receive_data(int32_t *p_shm_socket_fd)
 */
 int32_t server_init()
 {
-    int32_t	*p_shm_socket_fd;
-    /*
-        p_shm_socket_fd[1024] <-> 1024. byte connection size ı belirler.
-    */
+    int32_t	socket_fd[MAX_CONNECTION+1];
     int32_t result;
-    pid_t   accept_child_pid;
-    int32_t    ShmID;
+
+    pthread_t thread_create_socket;
+
+    int result = pthread_create( &thread_create_socket, NULL, create_socket_thread, (void*)socket_fd);
 
     /*
-        1024 Byte degerinde "shared memory" elde edilir.
+        Thread
+        Bu thread sadece client'dan gelen baglantı isteklerini kabul edecektir.
     */
-    ShmID = shmget(IPC_PRIVATE, 1025*sizeof(int32_t), IPC_CREAT | 0666);
-    if (ShmID < 0)
+    if(result < 0)
     {
-        DEBUG_ERROR("SMGGET hatalı dönüş yaptı.");
-        exit(1);
-    }
-
-    p_shm_socket_fd = (int32_t *) shmat(ShmID, NULL, 0);
-    if ((int32_t) p_shm_socket_fd == -1)
-    {
-        DEBUG_ERROR("SHMAT hatalı dönüş yaptı.");
-        exit(1);
-    }
-    DEBUG_INFO("1025 byte kadar shared memory olusturuldu.");
-
-    memset(p_shm_socket_fd,'\0',1025*sizeof(int32_t));
-    /*
-        Cocuk process olusturulur.
-    */
-    if((accept_child_pid = fork()) == -1)
-    {
-        DEBUG_ERROR("Process olusturulamadi.");
+        DEBUG_ERROR("Thread olusturulamadi.");
         return -1;
-    }
-
-    if(accept_child_pid == 0)
-    {
-        /*
-            Cocuk Process
-            Bu process sadece client'dan gelen baglantı isteklerini kabul edecektir.
-        */
-        chiled_process(p_shm_socket_fd);
-        
     }
     else
     {
+        pthread_join(thread_create_socket, NULL);
         /*
             Parent Process
             Bu process sadece client'dan gelen verileri alacaktır.
         */
-        DEBUG_INFO("Process Olusturuldu - Parent Process");
-        receive_data(p_shm_socket_fd);
+        receive_data(socket_fd);
     }
 }
