@@ -162,9 +162,10 @@ int32_t create_socket_thread(int32_t *socket_fd)
  * @param Shared olarak paylaşılan socket dizisidir.
  *
 */
-void receive_data(int32_t *socket_fd)
+void receive_data(void *v_socket_fd)
 {
     DEBUG_INFO("Parent Process");
+    int32_t *socket_fd = v_socket_fd;
 	int32_t temp_sock;
 	int32_t i = 0;
     int32_t read_length;
@@ -174,6 +175,7 @@ void receive_data(int32_t *socket_fd)
 
     FD_ZERO(&active_fd_set);
 
+    DEBUG_INFO("socket_fd[MAX_CONNECTION] = %d",socket_fd[MAX_CONNECTION]);
     for (;;)
     {
         /*
@@ -231,6 +233,7 @@ void receive_data(int32_t *socket_fd)
 int32_t server_init()
 {
     int32_t socket_fd[MAX_CONNECTION+1];
+    socket_fd[MAX_CONNECTION] = 0;
     int32_t result;
 
     pthread_t thread_create_socket;
