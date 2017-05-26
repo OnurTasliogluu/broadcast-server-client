@@ -1,9 +1,5 @@
-//
-// Created by n0pe on 27.05.2017.
-//
-
-#ifndef DENEME_DEBUG_H
-#define DENEME_DEBUG_H
+#ifndef DEBUG_H
+#define DEBUG_H
 
 
 #define red     "\033[1;31m"
@@ -30,4 +26,4 @@
         fprintf(stdout, format, ##args)
 
 
-#endif //DENEME_DEBUG_H
+#endif
