@@ -1,5 +1,10 @@
-#ifndef DEBUG_H
-#define DEBUG_H
+//
+// Created by n0pe on 27.05.2017.
+//
+
+#ifndef DENEME_DEBUG_H
+#define DENEME_DEBUG_H
+
 
 #define red     "\033[1;31m"
 #define green   "\033[1;32m"
@@ -15,11 +20,14 @@
 */
 
 #define DEBUG_INFO(format, args...)  \
+        setbuf(stdout, NULL), \
         fprintf(stdout, "%12s: %3d: %s ", __FILE__, __LINE__, green), \
         fprintf(stdout, format, ##args)
 
 #define DEBUG_ERROR(format, args...)  \
+        setbuf(stdout, NULL), \
         fprintf(stdout, "%12s: %3d: %s ", __FILE__, __LINE__, red), \
         fprintf(stdout, format, ##args)
 
-#endif
+
+#endif //DENEME_DEBUG_H
