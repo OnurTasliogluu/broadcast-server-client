@@ -1,12 +1,14 @@
-LD_FLAGS:=-ldl -lpthread
+LD_FLAGS:=-ldl	-lpthread
 CUSTOM_INC:=-I./inc
 OBJECTS:=server.o
+DEBUG:=-DDEBUG
+CC:=gcc
 
-main:	$(OBJECTS)
-	$(CC)	$(LDFLAGS)	-g	$(CUSTOM_INC)	$(OBJECTS)	main.c	$(LD_FLAGS)	-o	main
+main:$(OBJECTS)
+	$(CC)	-g	$(DEBUG)	$(CUSTOM_INC)	$(OBJECTS)	main.c	-o	main	$(LD_FLAGS)
 
 server.o:
-	$(CC)	$(CFLAGS)	-g	-c	src/server.c	-I./inc
+	$(CC)	-g	$(DEBUG)	$(CUSTOM_INC)	-c	src/server.c	$(LD_FLAGS)
 
 clean:
 	rm	*.o	main

@@ -3,10 +3,9 @@
 
 #include <stdint.h>
 
-int32_t bind_connection();
-int32_t accept_connection(int32_t main_socket);
-int32_t create_socket_thread(int32_t *p_shm_socket_fd);
-int32_t server_init();
-void receive_data(void *v_socket_fd);
+int32_t search_empty_and_set_socket_number(int32_t sock_id, int32_t condition);
+int32_t send_broadcast(int32_t base_socket, int8_t *client_message);
+void *socket_thread(void *arg);
+void start_server();
 
 #endif
