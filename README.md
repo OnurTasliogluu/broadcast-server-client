@@ -1,3 +1,2 @@
-# broadcast-server-client
-Broadcast yayın yapan chat uygulaması
-deneme
+# broadcast-chat-server-client
+Broadcast-Chat-Server
